@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 )
 import "github.com/gin-gonic/gin"
 
@@ -19,6 +20,17 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+var CISSleep = 200
+var DownloadSizeSleep = 50
+var TimeWindow = 2000
+var TestTimeout = 8000
+var MaxTrafficUse4g = 50
+var MaxTrafficUse5g = 300
+var MaxTrafficUseWifi = 1000
+var MaxTrafficUseOthers = 1000
+var KSimilar = 5
+var Threshold = 0.95
 
 func main() {
 	fmt.Println("start")
@@ -62,26 +74,26 @@ func main() {
 			Threshold         float64  `json:"threshold"`
 		}
 		var res Res
-		res.CISSleep = 200
-		res.DownloadSizeSleep = 50
-		res.TimeWindow = 2000
-		res.TestTimeout = 8000
-		res.MaxTrafficUse = 200
-		res.KSimilar = 5
-		res.Threshold = 0.95
+		res.CISSleep = CISSleep
+		res.DownloadSizeSleep = DownloadSizeSleep
+		res.TimeWindow = TimeWindow
+		res.TestTimeout = TestTimeout
+		res.MaxTrafficUse = MaxTrafficUseOthers
+		res.KSimilar = KSimilar
+		res.Threshold = Threshold
 		num := 8
-		if req.NetworkType == "4G" {
+		if req.NetworkType == "4G" || req.NetworkType == "3G" {
 			num = 4
-			res.MaxTrafficUse = 50
+			res.MaxTrafficUse = MaxTrafficUse4g
 		} else if req.NetworkType == "WiFi" {
 			num = 8
-			res.MaxTrafficUse = 500
+			res.MaxTrafficUse = MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
 			num = 8
-			res.MaxTrafficUse = 200
+			res.MaxTrafficUse = MaxTrafficUse5g
 		} else {
 			num = 8
-			res.MaxTrafficUse = 500
+			res.MaxTrafficUse = MaxTrafficUseOthers
 		}
 		res.ServerNum = min(num, len(req.ServersSortedByRTT))
 		//res.IpList = servers[:res.ServerNum]
@@ -89,6 +101,96 @@ func main() {
 		//fmt.Println(servers)
 		res.IpList = req.ServersSortedByRTT[:res.ServerNum]
 		c.JSON(http.StatusOK, res)
+	})
+	r.POST("/parameter/MaxTrafficUse4g/:num", func(c *gin.Context) {
+		limit := string(c.Param("num"))
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err":       err.Error(),
+				"parameter": limit,
+			})
+		} else {
+			MaxTrafficUse4g = intLimit
+			c.JSON(http.StatusOK, gin.H{
+				"parameter": MaxTrafficUse4g,
+			})
+		}
+	})
+	r.POST("/parameter/MaxTrafficUse5g/:num", func(c *gin.Context) {
+		limit := string(c.Param("num"))
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err":       err.Error(),
+				"parameter": limit,
+			})
+		} else {
+			MaxTrafficUse5g = intLimit
+			c.JSON(http.StatusOK, gin.H{
+				"parameter": MaxTrafficUse5g,
+			})
+		}
+	})
+	r.POST("/parameter/MaxTrafficUseWifi/:num", func(c *gin.Context) {
+		limit := string(c.Param("num"))
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err":       err.Error(),
+				"parameter": limit,
+			})
+		} else {
+			MaxTrafficUseWifi = intLimit
+			c.JSON(http.StatusOK, gin.H{
+				"parameter": MaxTrafficUseWifi,
+			})
+		}
+	})
+	r.POST("/parameter/MaxTrafficUseOthers/:num", func(c *gin.Context) {
+		limit := string(c.Param("num"))
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err":       err.Error(),
+				"parameter": limit,
+			})
+		} else {
+			MaxTrafficUseOthers = intLimit
+			c.JSON(http.StatusOK, gin.H{
+				"parameter": MaxTrafficUseOthers,
+			})
+		}
+	})
+	r.POST("/parameter/TestTimeout/:num", func(c *gin.Context) {
+		limit := string(c.Param("num"))
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err":       err.Error(),
+				"parameter": limit,
+			})
+		} else {
+			TestTimeout = intLimit
+			c.JSON(http.StatusOK, gin.H{
+				"parameter": TestTimeout,
+			})
+		}
+	})
+	r.POST("/parameter/KSimilar/:num", func(c *gin.Context) {
+		limit := string(c.Param("num"))
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err":       err.Error(),
+				"parameter": limit,
+			})
+		} else {
+			KSimilar = intLimit
+			c.JSON(http.StatusOK, gin.H{
+				"parameter": KSimilar,
+			})
+		}
 	})
 	if err := r.Run(); err != nil {
 		fmt.Println(err)
