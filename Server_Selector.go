@@ -81,18 +81,18 @@ func main() {
 		res.MaxTrafficUse = MaxTrafficUseOthers
 		res.KSimilar = KSimilar
 		res.Threshold = Threshold
-		num := 8
+		num := 4
 		if req.NetworkType == "4G" || req.NetworkType == "3G" {
 			num = 4
 			res.MaxTrafficUse = MaxTrafficUse4g
 		} else if req.NetworkType == "WiFi" {
-			num = 8
+			num = 4
 			res.MaxTrafficUse = MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
-			num = 8
+			num = 4
 			res.MaxTrafficUse = MaxTrafficUse5g
 		} else {
-			num = 8
+			num = 4
 			res.MaxTrafficUse = MaxTrafficUseOthers
 		}
 		res.ServerNum = min(num, len(req.ServersSortedByRTT))
