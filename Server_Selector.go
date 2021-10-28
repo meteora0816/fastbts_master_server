@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 )
 import "github.com/gin-gonic/gin"
 
 var servers = []string{"101.35.92.214", "101.35.86.228", "101.35.9.228", "101.35.9.114", // Shanghai
 	"49.232.210.247", "152.136.120.165", "152.136.124.173", "49.232.128.240"} // Beijing
+var lastUse map[string]time.Time
 
 //var servers = []string{"101.35.92.213", "101.35.86.227", "101.35.9.227", "101.35.9.113", // Shanghai
 //	"49.232.210.246", "152.136.120.164", "152.136.124.172", "49.232.128.240"} // Beijing
@@ -25,8 +27,8 @@ var CISSleep = 200
 var DownloadSizeSleep = 50
 var TimeWindow = 2000
 var TestTimeout = 8000
-var MaxTrafficUse4g = 50
-var MaxTrafficUse5g = 300
+var MaxTrafficUse4g = 100
+var MaxTrafficUse5g = 1000
 var MaxTrafficUseWifi = 1000
 var MaxTrafficUseOthers = 1000
 var KSimilar = 5
@@ -34,6 +36,10 @@ var Threshold = 0.95
 
 func main() {
 	fmt.Println("start")
+	lastUse = make(map[string]time.Time)
+	for _, ip := range servers {
+		lastUse[ip] = time.Now()
+	}
 	r = gin.Default()
 	r.GET("/hello", func(c *gin.Context) {
 		c.JSON(http.StatusOK, `hello, FastBTS!`)
@@ -57,7 +63,7 @@ func main() {
 		}
 		var req Req
 		err := c.BindJSON(&req)
-		fmt.Println(req.NetworkType)
+		//fmt.Println(req.NetworkType)
 		if err != nil {
 			fmt.Println("err")
 			return
@@ -82,24 +88,44 @@ func main() {
 		res.KSimilar = KSimilar
 		res.Threshold = Threshold
 		num := 4
-		if req.NetworkType == "4G" || req.NetworkType == "3G" {
-			num = 4
+		if req.NetworkType == "LTE" || req.NetworkType == "3G" || req.NetworkType == "2G" {
+			num = 2
 			res.MaxTrafficUse = MaxTrafficUse4g
-		} else if req.NetworkType == "WiFi" {
-			num = 4
+		} else if req.NetworkType == "WIFI" {
+			num = 6
 			res.MaxTrafficUse = MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
-			num = 4
+			num = 6
 			res.MaxTrafficUse = MaxTrafficUse5g
 		} else {
-			num = 4
+			num = 8
 			res.MaxTrafficUse = MaxTrafficUseOthers
 		}
 		res.ServerNum = min(num, len(req.ServersSortedByRTT))
 		//res.IpList = servers[:res.ServerNum]
 		//servers = append(servers[res.ServerNum:], servers[:res.ServerNum]...)
-		//fmt.Println(servers)
-		res.IpList = req.ServersSortedByRTT[:res.ServerNum]
+		//fmt.Println(req.ServersSortedByRTT)
+		//fmt.Println(lastUse)
+		var doNotUse []string
+		tp := 0
+		for _, ip := range req.ServersSortedByRTT {
+			//fmt.Println(ip, time.Since(lastUse[ip]).Seconds())
+			if tp < res.ServerNum && time.Since(lastUse[ip]).Seconds() >= 8 {
+				tp++
+				lastUse[ip] = time.Now()
+				res.IpList = append(res.IpList, ip)
+			} else {
+				doNotUse = append(doNotUse, ip)
+			}
+		}
+		for _, ip := range doNotUse {
+			if tp < res.ServerNum {
+				tp++
+				lastUse[ip] = time.Now()
+				res.IpList = append(res.IpList, ip)
+			}
+		}
+		//fmt.Println(res.IpList)
 		c.JSON(http.StatusOK, res)
 	})
 	r.POST("/parameter/MaxTrafficUse4g/:num", func(c *gin.Context) {
