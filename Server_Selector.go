@@ -4,13 +4,20 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 import "github.com/gin-gonic/gin"
 
 var servers = []string{"101.35.92.214", "101.35.86.228", "101.35.9.228", "101.35.9.114", // Shanghai
 	"49.232.210.247", "152.136.120.165", "152.136.124.173", "49.232.128.240"} // Beijing
-var lastUse map[string]time.Time
+//var lastUse map[string]time.Time
+type safeMap struct {
+	lastUseTime map[string]time.Time
+	mux         sync.RWMutex
+}
+
+var lastUse safeMap
 
 //var servers = []string{"101.35.92.213", "101.35.86.227", "101.35.9.227", "101.35.9.113", // Shanghai
 //	"49.232.210.246", "152.136.120.164", "152.136.124.172", "49.232.128.240"} // Beijing
@@ -36,9 +43,9 @@ var Threshold = 0.95
 
 func main() {
 	fmt.Println("start")
-	lastUse = make(map[string]time.Time)
+	lastUse.lastUseTime = make(map[string]time.Time)
 	for _, ip := range servers {
-		lastUse[ip] = time.Now()
+		lastUse.lastUseTime[ip] = time.Now()
 	}
 	r = gin.Default()
 	r.GET("/hello", func(c *gin.Context) {
@@ -106,13 +113,15 @@ func main() {
 		//servers = append(servers[res.ServerNum:], servers[:res.ServerNum]...)
 		//fmt.Println(req.ServersSortedByRTT)
 		//fmt.Println(lastUse)
+		lastUse.mux.Lock()
+		defer lastUse.mux.Unlock()
 		var doNotUse []string
 		tp := 0
 		for _, ip := range req.ServersSortedByRTT {
 			//fmt.Println(ip, time.Since(lastUse[ip]).Seconds())
-			if tp < res.ServerNum && time.Since(lastUse[ip]).Seconds() >= 8 {
+			if tp < res.ServerNum && time.Since(lastUse.lastUseTime[ip]).Seconds() >= 8 {
 				tp++
-				lastUse[ip] = time.Now()
+				lastUse.lastUseTime[ip] = time.Now()
 				res.IpList = append(res.IpList, ip)
 			} else {
 				doNotUse = append(doNotUse, ip)
@@ -121,7 +130,7 @@ func main() {
 		for _, ip := range doNotUse {
 			if tp < res.ServerNum {
 				tp++
-				lastUse[ip] = time.Now()
+				lastUse.lastUseTime[ip] = time.Now()
 				res.IpList = append(res.IpList, ip)
 			}
 		}
