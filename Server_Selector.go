@@ -9,8 +9,8 @@ import (
 )
 import "github.com/gin-gonic/gin"
 
-var servers = []string{"101.35.92.214", "101.35.86.228", "101.35.9.228", "101.35.9.114", // Shanghai
-	"49.232.210.247", "152.136.120.165", "152.136.124.173", "49.232.128.240"} // Beijing
+var servers = []string{"101.35.92.214", "101.35.86.228", "101.35.9.228", "101.35.9.114", "110.42.169.86", "121.5.26.137", "1.116.117.183", "1.15.30.244", // Shanghai
+	"49.232.210.247", "152.136.120.165", "152.136.124.173", "49.232.128.240", "81.70.193.140", "49.232.129.114", "62.234.117.45", "81.70.55.189"} // Beijing
 //var lastUse map[string]time.Time
 type safeMap struct {
 	lastUseTime map[string]time.Time
@@ -96,16 +96,16 @@ func main() {
 		res.Threshold = Threshold
 		num := 4
 		if req.NetworkType == "LTE" || req.NetworkType == "3G" || req.NetworkType == "2G" {
-			num = 2
+			num = 4
 			res.MaxTrafficUse = MaxTrafficUse4g
 		} else if req.NetworkType == "WIFI" {
-			num = 6
+			num = 12
 			res.MaxTrafficUse = MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
-			num = 6
+			num = 12
 			res.MaxTrafficUse = MaxTrafficUse5g
 		} else {
-			num = 8
+			num = 12
 			res.MaxTrafficUse = MaxTrafficUseOthers
 		}
 		res.ServerNum = min(num, len(req.ServersSortedByRTT))
