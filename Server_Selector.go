@@ -96,16 +96,16 @@ func main() {
 		res.Threshold = Threshold
 		num := 4
 		if req.NetworkType == "LTE" || req.NetworkType == "3G" || req.NetworkType == "2G" {
-			num = 4
+			num = 2
 			res.MaxTrafficUse = MaxTrafficUse4g
 		} else if req.NetworkType == "WIFI" {
-			num = 12
+			num = 6
 			res.MaxTrafficUse = MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
-			num = 12
+			num = 6
 			res.MaxTrafficUse = MaxTrafficUse5g
 		} else {
-			num = 12
+			num = 6
 			res.MaxTrafficUse = MaxTrafficUseOthers
 		}
 		res.ServerNum = min(num, len(req.ServersSortedByRTT))
