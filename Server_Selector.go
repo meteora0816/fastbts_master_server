@@ -34,6 +34,7 @@ var CISSleep = 200
 var DownloadSizeSleep = 50
 var TimeWindow = 2000
 var TestTimeout = 8000
+var GetInfoInterval = 200
 var MaxTrafficUse4g = 100
 var MaxTrafficUse5g = 1000
 var MaxTrafficUseWifi = 1000
@@ -85,6 +86,7 @@ func main() {
 			KSimilar          int      `json:"k_similar"`
 			MaxTrafficUse     int      `json:"max_traffic_use"`
 			Threshold         float64  `json:"threshold"`
+			GetInfoInterval   int      `json:"get_info_interval"`
 		}
 		var res Res
 		res.CISSleep = CISSleep
@@ -94,6 +96,7 @@ func main() {
 		res.MaxTrafficUse = MaxTrafficUseOthers
 		res.KSimilar = KSimilar
 		res.Threshold = Threshold
+		res.GetInfoInterval = GetInfoInterval
 		num := 4
 		if req.NetworkType == "LTE" || req.NetworkType == "3G" || req.NetworkType == "2G" {
 			num = 2
