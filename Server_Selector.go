@@ -139,8 +139,8 @@ func main() {
 		var doNotUse []string
 		tp := 0
 		for _, ip := range req.ServersSortedByRTT {
-			//fmt.Println(ip, time.Since(lastUse[ip]).Seconds())
-			if tp < res.ServerNum && time.Since(lastUse.lastUseTime[ip]).Seconds() >= 8 {
+			fmt.Println(ip, time.Since(lastUse.lastUseTime[ip]).Milliseconds(), int64(GlobalConfig.TestTimeout))
+			if tp < res.ServerNum && time.Since(lastUse.lastUseTime[ip]).Milliseconds() >= int64(GlobalConfig.TestTimeout) {
 				tp++
 				lastUse.lastUseTime[ip] = time.Now()
 				res.IpList = append(res.IpList, ip)
