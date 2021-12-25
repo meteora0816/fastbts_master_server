@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -30,17 +31,34 @@ func min(a, b int) int {
 	return b
 }
 
-var CISSleep = 200
-var DownloadSizeSleep = 50
-var TimeWindow = 2000
-var TestTimeout = 8000
-var GetInfoInterval = 200
-var MaxTrafficUse4g = 100
-var MaxTrafficUse5g = 1000
-var MaxTrafficUseWifi = 1000
-var MaxTrafficUseOthers = 1000
-var KSimilar = 5
-var Threshold = 0.95
+type Config struct {
+	CISSleep            int     `yaml:"cis_sleep"`
+	DownloadSizeSleep   int     `yaml:"download_size_sleep"`
+	TimeWindow          int     `yaml:"time_window"`
+	TestTimeout         int     `yaml:"test_timeout"`
+	GetInfoInterval     int     `yaml:"get_info_interval"`
+	MaxTrafficUse4g     int     `yaml:"max_traffic_use_4_g"`
+	MaxTrafficUse5g     int     `yaml:"max_traffic_use_5_g"`
+	MaxTrafficUseWifi   int     `yaml:"max_traffic_use_wifi"`
+	MaxTrafficUseOthers int     `yaml:"max_traffic_use_others"`
+	KSimilar            int     `yaml:"k_similar"`
+	Threshold           float64 `yaml:"threshold"`
+}
+
+var GlobalConfig Config
+
+func init() {
+	config, err := ioutil.ReadFile("./config.yaml")
+	if err != nil {
+		fmt.Print(err)
+	}
+	err = yaml.Unmarshal(config, &GlobalConfig)
+	if err != nil {
+		fmt.Print(err)
+	} else {
+		fmt.Println(GlobalConfig)
+	}
+}
 
 func main() {
 	fmt.Println("start")
@@ -89,27 +107,27 @@ func main() {
 			GetInfoInterval   int      `json:"get_info_interval"`
 		}
 		var res Res
-		res.CISSleep = CISSleep
-		res.DownloadSizeSleep = DownloadSizeSleep
-		res.TimeWindow = TimeWindow
-		res.TestTimeout = TestTimeout
-		res.MaxTrafficUse = MaxTrafficUseOthers
-		res.KSimilar = KSimilar
-		res.Threshold = Threshold
-		res.GetInfoInterval = GetInfoInterval
+		res.CISSleep = GlobalConfig.CISSleep
+		res.DownloadSizeSleep = GlobalConfig.DownloadSizeSleep
+		res.TimeWindow = GlobalConfig.TimeWindow
+		res.TestTimeout = GlobalConfig.TestTimeout
+		res.MaxTrafficUse = GlobalConfig.MaxTrafficUseOthers
+		res.KSimilar = GlobalConfig.KSimilar
+		res.Threshold = GlobalConfig.Threshold
+		res.GetInfoInterval = GlobalConfig.GetInfoInterval
 		num := 4
 		if req.NetworkType == "LTE" || req.NetworkType == "3G" || req.NetworkType == "2G" {
 			num = 2
-			res.MaxTrafficUse = MaxTrafficUse4g
+			res.MaxTrafficUse = GlobalConfig.MaxTrafficUse4g
 		} else if req.NetworkType == "WIFI" {
 			num = 6
-			res.MaxTrafficUse = MaxTrafficUseWifi
+			res.MaxTrafficUse = GlobalConfig.MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
 			num = 6
-			res.MaxTrafficUse = MaxTrafficUse5g
+			res.MaxTrafficUse = GlobalConfig.MaxTrafficUse5g
 		} else {
 			num = 6
-			res.MaxTrafficUse = MaxTrafficUseOthers
+			res.MaxTrafficUse = GlobalConfig.MaxTrafficUseOthers
 		}
 		res.ServerNum = min(num, len(req.ServersSortedByRTT))
 		//res.IpList = servers[:res.ServerNum]
@@ -139,96 +157,6 @@ func main() {
 		}
 		//fmt.Println(res.IpList)
 		c.JSON(http.StatusOK, res)
-	})
-	r.POST("/parameter/MaxTrafficUse4g/:num", func(c *gin.Context) {
-		limit := string(c.Param("num"))
-		fmt.Println(limit)
-		if intLimit, err := strconv.Atoi(limit); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err":       err.Error(),
-				"parameter": limit,
-			})
-		} else {
-			MaxTrafficUse4g = intLimit
-			c.JSON(http.StatusOK, gin.H{
-				"parameter": MaxTrafficUse4g,
-			})
-		}
-	})
-	r.POST("/parameter/MaxTrafficUse5g/:num", func(c *gin.Context) {
-		limit := string(c.Param("num"))
-		fmt.Println(limit)
-		if intLimit, err := strconv.Atoi(limit); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err":       err.Error(),
-				"parameter": limit,
-			})
-		} else {
-			MaxTrafficUse5g = intLimit
-			c.JSON(http.StatusOK, gin.H{
-				"parameter": MaxTrafficUse5g,
-			})
-		}
-	})
-	r.POST("/parameter/MaxTrafficUseWifi/:num", func(c *gin.Context) {
-		limit := string(c.Param("num"))
-		fmt.Println(limit)
-		if intLimit, err := strconv.Atoi(limit); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err":       err.Error(),
-				"parameter": limit,
-			})
-		} else {
-			MaxTrafficUseWifi = intLimit
-			c.JSON(http.StatusOK, gin.H{
-				"parameter": MaxTrafficUseWifi,
-			})
-		}
-	})
-	r.POST("/parameter/MaxTrafficUseOthers/:num", func(c *gin.Context) {
-		limit := string(c.Param("num"))
-		fmt.Println(limit)
-		if intLimit, err := strconv.Atoi(limit); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err":       err.Error(),
-				"parameter": limit,
-			})
-		} else {
-			MaxTrafficUseOthers = intLimit
-			c.JSON(http.StatusOK, gin.H{
-				"parameter": MaxTrafficUseOthers,
-			})
-		}
-	})
-	r.POST("/parameter/TestTimeout/:num", func(c *gin.Context) {
-		limit := string(c.Param("num"))
-		fmt.Println(limit)
-		if intLimit, err := strconv.Atoi(limit); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err":       err.Error(),
-				"parameter": limit,
-			})
-		} else {
-			TestTimeout = intLimit
-			c.JSON(http.StatusOK, gin.H{
-				"parameter": TestTimeout,
-			})
-		}
-	})
-	r.POST("/parameter/KSimilar/:num", func(c *gin.Context) {
-		limit := string(c.Param("num"))
-		fmt.Println(limit)
-		if intLimit, err := strconv.Atoi(limit); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"err":       err.Error(),
-				"parameter": limit,
-			})
-		} else {
-			KSimilar = intLimit
-			c.JSON(http.StatusOK, gin.H{
-				"parameter": KSimilar,
-			})
-		}
 	})
 	if err := r.Run(); err != nil {
 		fmt.Println(err)
