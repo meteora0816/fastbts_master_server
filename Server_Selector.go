@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"sync"
 	"time"
@@ -120,6 +121,9 @@ func main() {
 			num = 2
 			res.MaxTrafficUse = GlobalConfig.MaxTrafficUse4g
 		} else if req.NetworkType == "WIFI" {
+			if rand.Intn(10) != 0 {
+				res.TestTimeout = 1000
+			}
 			num = 6
 			res.MaxTrafficUse = GlobalConfig.MaxTrafficUseWifi
 		} else if req.NetworkType == "5G" {
