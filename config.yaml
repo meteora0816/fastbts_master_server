@@ -9,3 +9,15 @@ max_traffic_use_wifi: 2000
 max_traffic_use_others: 2000
 k_similar: 5
 threshold: 0.95
+max_bandwidth: 200
+servers:
+ - 0.0.0.0
+ - 0.0.0.1
+ - 0.0.0.2
+ - 0.0.0.3
+ - 0.0.0.4
+ - 0.0.0.5
+ - 0.0.0.6
+ - 0.0.0.7
+ - 0.0.0.8
+ - 0.0.0.9
